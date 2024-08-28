@@ -17,6 +17,10 @@ This is a TODO application built with Next.js. It features drag-and-drop functio
 - **@hello-pangea/dnd**: Library for drag-and-drop functionality.
 - **Jotai**: State management library for managing task states.
 
+## Live Demo
+
+You can try out the live application here: [TODO Application Live](https://todo-vaithiyalingam-sowmiyans-projects.vercel.app/)
+
 ## Prerequisites
 
 - Node.js (>=14.x)
