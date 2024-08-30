@@ -9,6 +9,7 @@ This is a TODO application built with Next.js. It features drag-and-drop functio
 - **Edit Tasks**: Update the title and description of existing tasks.
 - **Delete Tasks**: Remove tasks from the list.
 - **Task Statuses**: Visualize tasks in various statuses to track their progress.
+- **Search Tasks**: Quickly find tasks by title using the search functionality.
 
 ## Technologies Used
 
