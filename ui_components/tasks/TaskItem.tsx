@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Draggable } from "@hello-pangea/dnd";
 import { Task } from "../../store/store";
 import EditForm from "./EditForm";
@@ -9,13 +9,6 @@ import TaskFooter from "./TaskFooter";
 interface TaskItemProps {
   task: Task;
   index: number;
-  editingTaskId: number | null;
-  editTitle: string;
-  editDescription: string;
-  setEditTitle: React.Dispatch<React.SetStateAction<string>>;
-  setEditDescription: React.Dispatch<React.SetStateAction<string>>;
-  handleSave: (id: number) => void;
-  handleCancel: () => void;
   handleEdit: (task: Task) => void;
   deleteTask: (id: number) => void;
 }
@@ -23,52 +16,52 @@ interface TaskItemProps {
 const TaskItem: React.FC<TaskItemProps> = ({
   task,
   index,
-  editingTaskId,
-  editTitle,
-  editDescription,
-  setEditTitle,
-  setEditDescription,
-  handleSave,
-  handleCancel,
   handleEdit,
   deleteTask,
-}) => (
-  <Draggable
-    key={task.id.toString()}
-    draggableId={task.id.toString()}
-    index={index}
-  >
-    {(provided) => (
-      <li
-        ref={provided.innerRef}
-        {...provided.draggableProps}
-        {...provided.dragHandleProps}
-        className="border p-4 mb-2 rounded-md bg-[#F7F7F7]"
-      >
-        {editingTaskId === task.id ? (
-          <EditForm
-            editTitle={editTitle}
-            editDescription={editDescription}
-            setEditTitle={setEditTitle}
-            setEditDescription={setEditDescription}
-            handleSave={() => handleSave(task.id)}
-            handleCancel={handleCancel}
-          />
-        ) : (
+}) => {
+  const [showEdit, setShowEdit] = useState(false);
+
+  return (
+    <Draggable
+      key={task.id.toString()}
+      draggableId={task.id.toString()}
+      index={index}
+    >
+      {(provided) => (
+        <li
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          {...provided.dragHandleProps}
+          className="p-4 mb-2 h-[140px] border-b border-b-[#DDDDDD]"
+          onMouseEnter={() => {
+            setShowEdit(true);
+          }}
+          onMouseLeave={() => {
+            setShowEdit(false);
+          }}
+        >
           <>
-            <TaskHeader task={task} />
-            <TaskDescription task={task} />
-            <TaskFooter
-              createdOn={task.createdOn}
-              handleEdit={handleEdit}
-              deleteTask={deleteTask}
-              task={task}
-            />
+            <div className="flex items-start gap-3 w-full">
+              <div className="flex items-center justify-center w-10 h-10 border border-blue-800 text-blue-800 font-semibold rounded-full flex-shrink-0">
+                {task.title.charAt(0)}
+              </div>
+              <div className="w-full">
+                <TaskHeader task={task} />
+                <TaskDescription task={task} />
+                <TaskFooter
+                  createdOn={task.createdOn}
+                  handleEdit={handleEdit}
+                  deleteTask={deleteTask}
+                  task={task}
+                  showEdit={showEdit}
+                />
+              </div>
+            </div>
           </>
-        )}
-      </li>
-    )}
-  </Draggable>
-);
+        </li>
+      )}
+    </Draggable>
+  );
+};
 
 export default TaskItem;

@@ -1,60 +1,43 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useAtom } from "jotai";
-import {
-  tasksAtom,
-  deleteTaskAtom,
-  updateTaskAtom,
-  Task,
-  TaskStatus,
-} from "../../store/store";
+import { tasksAtom, deleteTaskAtom, Task, TaskStatus } from "../../store/store";
 import { DragDropContext, Droppable } from "@hello-pangea/dnd";
 import TaskItem from "./TaskItem";
+import Accordion from "../Accordian";
+import { useEdit } from "../../utils/editHooks/useEdit";
 
 const TaskList: React.FC = () => {
   const [tasks, setTasks] = useAtom(tasksAtom);
   const [, deleteTask] = useAtom(deleteTaskAtom);
-  const [, updateTask] = useAtom(updateTaskAtom);
 
-  const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
-  const [editTitle, setEditTitle] = useState("");
-  const [editDescription, setEditDescription] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [openAccordion, setOpenAccordion] = useState<boolean>(false);
+  const { handleEdit } = useEdit();
 
-  const handleEdit = (task: Task) => {
-    setEditingTaskId(task.id);
-    setEditTitle(task.title);
-    setEditDescription(task.description);
-  };
-
-  const handleSave = (id: number) => {
-    const updatedTask: Task = {
-      ...tasks.find((task) => task.id === id)!,
-      title: editTitle,
-      description: editDescription,
-    };
-    updateTask(updatedTask);
-    setEditingTaskId(null);
-  };
-
-  const handleCancel = () => {
-    setEditingTaskId(null);
-  };
+  const filteredTasks = tasks.filter((task) =>
+    task.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const groupedTasks: Record<TaskStatus, Task[]> = {
-    [TaskStatus.Pending]: tasks.filter(
+    [TaskStatus.Pending]: filteredTasks.filter(
       (task) => task.status === TaskStatus.Pending
     ),
-    [TaskStatus.InProgress]: tasks.filter(
+    [TaskStatus.InProgress]: filteredTasks.filter(
       (task) => task.status === TaskStatus.InProgress
     ),
-    [TaskStatus.Completed]: tasks.filter(
+    [TaskStatus.Completed]: filteredTasks.filter(
       (task) => task.status === TaskStatus.Completed
     ),
   };
 
+  const handleOnDragStart = (result: any) => {
+    const { source } = result;
+    console.log(source, "source");
+  };
+
   const handleOnDragEnd = (result: any) => {
     const { destination, source, draggableId } = result;
-
     if (
       !destination ||
       (destination.droppableId === source.droppableId &&
@@ -90,59 +73,83 @@ const TaskList: React.FC = () => {
     setTasks(updatedTasks);
   };
 
+  useEffect(() => {
+    if (searchQuery.trim() !== "") {
+      setOpenAccordion(true);
+    }
+  }, [searchQuery]);
+
+  useEffect(() => {
+    setOpenAccordion(true);
+  }, [tasks]);
+
   return (
-    <DragDropContext onDragEnd={handleOnDragEnd}>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
+    <div className="relative">
+      <input
+        type="text"
+        placeholder="Search tasks..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        className="mb-4 p-2 border border-gray-300 rounded-md w-full"
+      />
+
+      <DragDropContext
+        onDragStart={handleOnDragStart}
+        onDragEnd={handleOnDragEnd}
+      >
         {Object.keys(groupedTasks).map((status) => {
           const typedStatus = status as TaskStatus;
           const tasksForStatus = groupedTasks[typedStatus];
           return (
-            <Droppable key={status} droppableId={status} direction="vertical">
-              {(provided) => (
-                <div
-                  ref={provided.innerRef}
-                  {...provided.droppableProps}
-                  className="bg-gray-100 rounded-md flex flex-col h-[90vh]"
-                >
-                  <div className="sticky top-0 bg-gray-100 p-4 shadow-md z-10">
-                    <h2 className="text-lg font-semibold mb-2 capitalize">
-                      {status}
-                    </h2>
-                  </div>
-                  <div className="flex-1 overflow-auto custom-scrollbar">
-                    <ul className="p-4">
-                      {tasksForStatus.length > 0 ? (
-                        tasksForStatus.map((task, index) => (
-                          <TaskItem
-                            key={task.id}
-                            task={task}
-                            index={index}
-                            editingTaskId={editingTaskId}
-                            editTitle={editTitle}
-                            editDescription={editDescription}
-                            setEditTitle={setEditTitle}
-                            setEditDescription={setEditDescription}
-                            handleSave={handleSave}
-                            handleCancel={handleCancel}
-                            handleEdit={handleEdit}
-                            deleteTask={deleteTask}
-                          />
-                        ))
-                      ) : (
-                        <li className="text-gray-500 text-center py-10">
-                          No Items Found
-                        </li>
-                      )}
-                      {provided.placeholder}
-                    </ul>
-                  </div>
-                </div>
-              )}
-            </Droppable>
+            <div
+              key={status}
+              onDragStart={() => {
+                setOpenAccordion(true);
+              }}
+              onDragEnd={() => {
+                setOpenAccordion(false);
+              }}
+            >
+              <Accordion
+                key={status}
+                title={status}
+                isOpen={openAccordion}
+                itemCount={tasksForStatus.length}
+              >
+                <Droppable droppableId={status} direction="vertical">
+                  {(provided) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.droppableProps}
+                      className="rounded-md flex flex-col"
+                    >
+                      <ul className="">
+                        {tasksForStatus.length > 0 ? (
+                          tasksForStatus.map((task, index) => (
+                            <TaskItem
+                              key={task.id}
+                              task={task}
+                              index={index}
+                              handleEdit={handleEdit}
+                              deleteTask={deleteTask}
+                            />
+                          ))
+                        ) : (
+                          <li className="text-gray-500 text-center py-10">
+                            No Items Found
+                          </li>
+                        )}
+                        {provided.placeholder}
+                      </ul>
+                    </div>
+                  )}
+                </Droppable>
+              </Accordion>
+            </div>
           );
         })}
-      </div>
-    </DragDropContext>
+      </DragDropContext>
+    </div>
   );
 };
 

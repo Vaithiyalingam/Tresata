@@ -15,12 +15,25 @@ export interface Task {
   createdOn: string;
 }
 
+export interface EditTaskState {
+  editingTaskId: number | null;
+  editTitle: string;
+  editDescription: string;
+  editStatus: TaskStatus | TaskStatus.Pending;
+}
+
 export const tasksAtom = atomWithStorage<Task[]>('tasks', []);
+export const editTaskStateAtom = atom<EditTaskState>({
+  editingTaskId: null,
+  editTitle: '',
+  editDescription: '',
+  editStatus: TaskStatus.Pending
+}); 
 
 export const addTaskAtom = atom(
   (get) => get(tasksAtom),
   (get, set, newTask: Task) => {
-    const updatedTasks = [...get(tasksAtom), newTask];
+    const updatedTasks = [newTask,...get(tasksAtom)];
     set(tasksAtom, updatedTasks);
   }
 );
